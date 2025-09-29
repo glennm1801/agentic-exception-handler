@@ -1,65 +1,149 @@
-body {
-  margin: 0;
-  background: linear-gradient(180deg, rgb(117, 81, 194), rgb(255, 255, 255));
-  display: flex;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  height: 100vh;
-  width: 100vw;
-  justify-content: center;
-  align-items: center;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Modern Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+
+    --destructive: 0 72.22% 50.59%;
+    --destructive-foreground: 210 20% 98%;
+
+    /* Modern Enterprise Colors */
+    --enterprise-blue: 262 83% 58%;
+    --enterprise-blue-dark: 262 83% 48%;
+    --enterprise-blue-light: 262 83% 68%;
+    
+    --workflow-primary: 240 10% 3.9%;
+    --workflow-secondary: 210 40% 96%;
+    --workflow-accent: 47 96% 53%;
+    
+    --status-pending: 43 96% 56%;
+    --status-processing: 262 83% 58%;
+    --status-completed: 142 76% 36%;
+    --status-error: 0 72% 51%;
+    
+    /* Modern Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--enterprise-blue-dark)));
+    --gradient-modern: linear-gradient(135deg, hsl(262 83% 58% / 0.1), hsl(262 83% 58% / 0.05));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.7), hsl(0 0% 100% / 0.3));
+    
+    /* Modern Shadows */
+    --shadow-soft: 0 2px 8px 0 hsl(0 0% 0% / 0.04);
+    --shadow-medium: 0 4px 16px 0 hsl(0 0% 0% / 0.08);
+    --shadow-large: 0 8px 32px 0 hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.05), 0 1px 3px 0 hsl(var(--primary) / 0.1);
+    
+    /* Smooth Animations */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  .dark {
+    /* Modern Dark Theme */
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+
+    --accent: 215 28% 17%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 72.22% 50.59%;
+    --destructive-foreground: 210 20% 98%;
+
+    /* Dark Enterprise Colors */
+    --enterprise-blue: 262 83% 58%;
+    --enterprise-blue-dark: 262 83% 48%;
+    --enterprise-blue-light: 262 83% 68%;
+    
+    --workflow-primary: 213 31% 91%;
+    --workflow-secondary: 215 28% 17%;
+    --workflow-accent: 47 96% 53%;
+    
+    /* Dark Gradients */
+    --gradient-modern: linear-gradient(135deg, hsl(262 83% 58% / 0.15), hsl(262 83% 58% / 0.05));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.02));
+    
+    /* Dark Shadows */
+    --shadow-soft: 0 2px 8px 0 hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 16px 0 hsl(0 0% 0% / 0.4);
+    --shadow-large: 0 8px 32px 0 hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.3), 0 1px 3px 0 hsl(var(--primary) / 0.4);
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 262 83% 58%;
+
+    --sidebar-background: 224 71% 4%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 215 28% 17%;
+    --sidebar-accent-foreground: 213 31% 91%;
+    --sidebar-border: 215 28% 17%;
+    --sidebar-ring: 262 83% 58%;
+  }
 }
 
-main {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-  color: white;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-ul {
-  padding-inline-start: 0;
-  margin-block-start: 0;
-  margin-block-end: 0;
-  list-style-type: none;
-  display: flex;
-  flex-direction: column;
-  margin: 8px 0;
-  border: 1px solid black;
-  gap: 1px;
-  background-color: black;
-  border-radius: 8px;
-  overflow: auto;
-}
-
-li {
-  background-color: white;
-  padding: 8px;
-}
-
-li:hover {
-  background: #dadbf9;
-}
-
-a {
-  font-weight: 800;
-  text-decoration: none;
+  body {
+    @apply bg-background text-foreground;
+  }
 }
