@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Send, MessageCircle, Bot } from "lucide-react";
+import { X, Send, MessageCircle, Bot, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,6 +27,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
     },
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
@@ -59,12 +60,22 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
     }
   };
 
+  const toggleMaximize = () => {
+    setIsMaximized((prev) => !prev);
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-end p-4">
       <div className="bg-background/80 backdrop-blur-sm absolute inset-0 z-40" onClick={onClose} />
-      <div className="relative z-50 bg-card border border-border rounded-2xl shadow-large w-96 h-[600px] flex flex-col overflow-hidden">
+      <div 
+        className={`relative z-50 bg-card border border-border rounded-2xl shadow-large flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+          isMaximized 
+            ? "w-full h-full max-w-none m-0 rounded-none" 
+            : "w-96 h-[600px]"
+        }`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-modern">
           <div className="flex items-center space-x-3">
@@ -76,14 +87,25 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
               <p className="text-xs text-muted-foreground">Online</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0 hover:bg-muted/50"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMaximize}
+              className="h-8 w-8 p-0 hover:bg-muted/50"
+              title={isMaximized ? "Restore size" : "Maximize"}
+            >
+              {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0 hover:bg-muted/50"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
