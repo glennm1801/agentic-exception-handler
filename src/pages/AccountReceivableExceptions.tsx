@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, ArrowRight, FileText, ArrowLeft, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Eye, ArrowRight, FileText, ArrowLeft, CheckCircle, AlertCircle, Clock, Package, Receipt, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Exception {
   id: string;
@@ -104,6 +105,61 @@ const getProcessingSteps = (exception: Exception): ProcessingStep[] => {
   return baseSteps;
 };
 
+// Mock data for document details
+const getInvoiceDetails = (exception: Exception) => ({
+  invoiceNumber: `INV-2024-${exception.id.padStart(4, '0')}`,
+  invoiceDate: exception.receivedDate,
+  dueDate: new Date(new Date(exception.receivedDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  amount: (Math.random() * 10000 + 1000).toFixed(2),
+  currency: "USD",
+  vendorName: exception.emailSender.split('@')[1]?.split('.')[0]?.toUpperCase() || "VENDOR",
+  vendorAddress: "123 Business Street, Commerce City, CC 12345",
+  lineItems: [
+    { description: "Product/Service A", quantity: 5, unitPrice: 150.00, total: 750.00 },
+    { description: "Product/Service B", quantity: 3, unitPrice: 200.00, total: 600.00 },
+    { description: "Shipping & Handling", quantity: 1, unitPrice: 50.00, total: 50.00 },
+  ],
+  taxRate: 8.5,
+  subtotal: 1400.00,
+  tax: 119.00,
+  total: 1519.00,
+});
+
+const getGoodsReceiptDetails = (exception: Exception) => ({
+  grNumber: `GR-2024-${exception.id.padStart(4, '0')}`,
+  receiptDate: exception.receivedDate,
+  warehouseLocation: "Warehouse A - Bay 12",
+  receivedBy: "John Smith",
+  deliveryNote: `DN-${Math.floor(Math.random() * 100000)}`,
+  carrier: "Express Logistics Inc.",
+  items: [
+    { itemCode: "SKU-001", description: "Product A", orderedQty: 5, receivedQty: 5, condition: "Good" },
+    { itemCode: "SKU-002", description: "Product B", orderedQty: 3, receivedQty: 3, condition: "Good" },
+  ],
+  inspectionStatus: "Passed",
+  notes: "All items received in good condition. No damage observed.",
+});
+
+const getPurchaseOrderDetails = (exception: Exception) => ({
+  poNumber: `PO-2024-${exception.id.padStart(4, '0')}`,
+  orderDate: new Date(new Date(exception.receivedDate).getTime() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  expectedDelivery: exception.receivedDate,
+  buyerName: "Accounts Payable Team",
+  buyerEmail: "ap@company.com",
+  vendorName: exception.emailSender.split('@')[1]?.split('.')[0]?.toUpperCase() || "VENDOR",
+  vendorContact: exception.emailSender,
+  paymentTerms: "Net 30",
+  shippingMethod: "Standard Ground",
+  items: [
+    { itemCode: "SKU-001", description: "Product A", quantity: 5, unitPrice: 150.00, total: 750.00 },
+    { itemCode: "SKU-002", description: "Product B", quantity: 3, unitPrice: 200.00, total: 600.00 },
+  ],
+  subtotal: 1350.00,
+  shippingCost: 50.00,
+  total: 1400.00,
+  status: "Fulfilled",
+});
+
 export default function AccountReceivableExceptions() {
   const [data, setData] = useState<Exception[]>(mockData);
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,6 +168,8 @@ export default function AccountReceivableExceptions() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedException, setSelectedException] = useState<Exception | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewException, setViewException] = useState<Exception | null>(null);
 
   const filteredData = data
     .filter((item) => {
@@ -140,8 +198,14 @@ export default function AccountReceivableExceptions() {
     }
   };
 
-  const handleViewDetails = (id: string) => {
-    console.log("View details for exception:", id);
+  const handleViewDetails = (exception: Exception) => {
+    setViewException(exception);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
+    setViewException(null);
   };
 
   const handleViewProcessingDetails = (exception: Exception) => {
@@ -156,7 +220,6 @@ export default function AccountReceivableExceptions() {
 
   const handleTriggerAction = (id: string) => {
     console.log("Trigger action for exception:", id);
-    // Update status to reviewed for demo
     setData(prev => prev.map(item => 
       item.id === id ? { ...item, status: "reviewed" as const } : item
     ));
@@ -300,7 +363,7 @@ export default function AccountReceivableExceptions() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleViewDetails(exception.id)}
+                      onClick={() => handleViewDetails(exception)}
                       className="h-8 w-8 p-0"
                     >
                       <Eye className="h-4 w-4" />
@@ -412,6 +475,343 @@ export default function AccountReceivableExceptions() {
               {/* Return Button */}
               <div className="flex justify-end">
                 <Button onClick={handleCloseDetails} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Return to Exceptions
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Modal with Tabs */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Document Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewException && (
+            <div className="space-y-4">
+              <Tabs defaultValue="invoice" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="invoice" className="gap-2">
+                    <Receipt className="h-4 w-4" />
+                    Invoice
+                  </TabsTrigger>
+                  <TabsTrigger value="goods-receipt" className="gap-2">
+                    <Package className="h-4 w-4" />
+                    Goods Receipt
+                  </TabsTrigger>
+                  <TabsTrigger value="purchase-order" className="gap-2">
+                    <ShoppingCart className="h-4 w-4" />
+                    Purchase Order
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Invoice Tab */}
+                <TabsContent value="invoice" className="space-y-4 mt-4">
+                  {(() => {
+                    const invoice = getInvoiceDetails(viewException);
+                    return (
+                      <>
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Receipt className="h-4 w-4" />
+                              Invoice Information
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Invoice Number</span>
+                                <p className="font-medium">{invoice.invoiceNumber}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Invoice Date</span>
+                                <p className="font-medium">{new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Due Date</span>
+                                <p className="font-medium">{new Date(invoice.dueDate).toLocaleDateString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Vendor</span>
+                                <p className="font-medium">{invoice.vendorName}</p>
+                              </div>
+                              <div className="col-span-2">
+                                <span className="text-muted-foreground">Vendor Address</span>
+                                <p className="font-medium">{invoice.vendorAddress}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Line Items</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Description</TableHead>
+                                  <TableHead className="text-right">Qty</TableHead>
+                                  <TableHead className="text-right">Unit Price</TableHead>
+                                  <TableHead className="text-right">Total</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {invoice.lineItems.map((item, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell>{item.description}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                            <Separator className="my-4" />
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Subtotal</span>
+                                <span>${invoice.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Tax ({invoice.taxRate}%)</span>
+                                <span>${invoice.tax.toFixed(2)}</span>
+                              </div>
+                              <Separator />
+                              <div className="flex justify-between font-bold">
+                                <span>Total</span>
+                                <span>${invoice.total.toFixed(2)} {invoice.currency}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </>
+                    );
+                  })()}
+                </TabsContent>
+
+                {/* Goods Receipt Tab */}
+                <TabsContent value="goods-receipt" className="space-y-4 mt-4">
+                  {(() => {
+                    const gr = getGoodsReceiptDetails(viewException);
+                    return (
+                      <>
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Package className="h-4 w-4" />
+                              Receipt Information
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">GR Number</span>
+                                <p className="font-medium">{gr.grNumber}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Receipt Date</span>
+                                <p className="font-medium">{new Date(gr.receiptDate).toLocaleDateString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Delivery Note</span>
+                                <p className="font-medium">{gr.deliveryNote}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Warehouse Location</span>
+                                <p className="font-medium">{gr.warehouseLocation}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Received By</span>
+                                <p className="font-medium">{gr.receivedBy}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Carrier</span>
+                                <p className="font-medium">{gr.carrier}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Received Items</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Item Code</TableHead>
+                                  <TableHead>Description</TableHead>
+                                  <TableHead className="text-right">Ordered Qty</TableHead>
+                                  <TableHead className="text-right">Received Qty</TableHead>
+                                  <TableHead>Condition</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {gr.items.map((item, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell className="font-mono">{item.itemCode}</TableCell>
+                                    <TableCell>{item.description}</TableCell>
+                                    <TableCell className="text-right">{item.orderedQty}</TableCell>
+                                    <TableCell className="text-right">{item.receivedQty}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={item.condition === "Good" ? "default" : "destructive"}>
+                                        {item.condition}
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Inspection Status</span>
+                                <p className="mt-1">
+                                  <Badge variant={gr.inspectionStatus === "Passed" ? "default" : "destructive"}>
+                                    {gr.inspectionStatus}
+                                  </Badge>
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Notes</span>
+                                <p className="font-medium">{gr.notes}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </>
+                    );
+                  })()}
+                </TabsContent>
+
+                {/* Purchase Order Tab */}
+                <TabsContent value="purchase-order" className="space-y-4 mt-4">
+                  {(() => {
+                    const po = getPurchaseOrderDetails(viewException);
+                    return (
+                      <>
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <ShoppingCart className="h-4 w-4" />
+                              Order Information
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">PO Number</span>
+                                <p className="font-medium">{po.poNumber}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Order Date</span>
+                                <p className="font-medium">{new Date(po.orderDate).toLocaleDateString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Expected Delivery</span>
+                                <p className="font-medium">{new Date(po.expectedDelivery).toLocaleDateString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Vendor</span>
+                                <p className="font-medium">{po.vendorName}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Vendor Contact</span>
+                                <p className="font-medium">{po.vendorContact}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Status</span>
+                                <p className="mt-1">
+                                  <Badge variant="default">{po.status}</Badge>
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Buyer</span>
+                                <p className="font-medium">{po.buyerName}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Payment Terms</span>
+                                <p className="font-medium">{po.paymentTerms}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Shipping Method</span>
+                                <p className="font-medium">{po.shippingMethod}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Order Items</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Item Code</TableHead>
+                                  <TableHead>Description</TableHead>
+                                  <TableHead className="text-right">Qty</TableHead>
+                                  <TableHead className="text-right">Unit Price</TableHead>
+                                  <TableHead className="text-right">Total</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {po.items.map((item, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell className="font-mono">{item.itemCode}</TableCell>
+                                    <TableCell>{item.description}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                            <Separator className="my-4" />
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Subtotal</span>
+                                <span>${po.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Shipping</span>
+                                <span>${po.shippingCost.toFixed(2)}</span>
+                              </div>
+                              <Separator />
+                              <div className="flex justify-between font-bold">
+                                <span>Total</span>
+                                <span>${po.total.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </>
+                    );
+                  })()}
+                </TabsContent>
+              </Tabs>
+
+              <Separator />
+
+              {/* Return Button */}
+              <div className="flex justify-end">
+                <Button onClick={handleCloseViewModal} className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Return to Exceptions
                 </Button>
